@@ -22,21 +22,14 @@ void recycle_child(int signum)
 {
 	int status;
 	pid_t ret;
-	while (1) {
-		ret = waitpid(0, &status, WNOHANG);
-		if (ret == -1) {
-	   		perror("wait error");
-	   		break;
-   		} else if (ret == 0) {
-   			break;
-   		} else {
-	       if (WIFEXITED(status)) {
-	           printf("%u exited, status=%d\n", ret, WEXITSTATUS(status));
-	       } else if (WIFSIGNALED(status)) {
-	           printf("killed by signal %d\n", WTERMSIG(status));
-	       }
-   		}
-   }
+	//这里直接一个while循环即可
+	while ((ret = waitpid(0, &status, WNOHANG)) > 0) {
+       if (WIFEXITED(status)) {
+           printf("%u exited, status=%d\n", ret, WEXITSTATUS(status));
+       } else if (WIFSIGNALED(status)) {
+           printf("killed by signal %d\n", WTERMSIG(status));
+       }
+    }
 }
 
 int main()
@@ -57,7 +50,7 @@ int main()
 
 	act.sa_handler = recycle_child;
 	sigemptyset(&act.sa_mask);
-	act.sa_flags = SA_RESTART;
+	// act.sa_flags = SA_RESTART;
 
 	
 	ret = sigaction(SIGCHLD, &act, &oldact);
@@ -65,7 +58,6 @@ int main()
 		perror("sigaction error");
 		exit(EXIT_FAILURE);
 	}
-
 
 	sfd = Socket(AF_INET, SOCK_STREAM, 0);
 
@@ -78,6 +70,7 @@ int main()
 	Listen(sfd, BACKLOG);
 
 
+	//父进程负责接客和回收子进程
 	while (1) {
 		addrlen = sizeof(caddr);
 		cfd = Accept(sfd, (struct sockaddr *) &caddr, &addrlen);//addrlen传入传输参数，阻塞等待连接
