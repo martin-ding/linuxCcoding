@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <signal.h>
 
 
 #define PORT 6666
@@ -19,7 +21,13 @@ int main()
 	char buf[BUFSIZ] = {0};
 	int n, i;
 
+	signal(SIGPIPE, SIG_IGN);
+
 	sfd = socket(AF_INET, SOCK_STREAM, 0);
+
+
+	int opt = 1;
+	setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));//设置地址重用
 
 	saddr.sin_family = AF_INET;
 	saddr.sin_port = htons(PORT);//port占16位一共可以有65535 个
@@ -29,6 +37,7 @@ int main()
 
 	listen(sfd, BACKLOG);
 
+	listen : 
 	addrlen = sizeof(caddr);
 	cfd = accept(sfd, (struct sockaddr *) &caddr, &addrlen);//addrlen传入传输参数，阻塞等待连接
 
@@ -38,13 +47,15 @@ int main()
 	printf("client address %d,  %s \n", ntohs(caddr.sin_port), ip);
 	while (1) {
 		n = read(cfd, buf, BUFSIZ);
+		if (n < 0) {goto listen;}// 这里瞎几把搞的
 		for (i = 0; i < n; ++i)
 		{
 			buf[i] = toupper(buf[i]);
 			/* code */
 		}
 
-		write(cfd, buf, n);
+		write(cfd, buf, n);//此时已经关闭了
+		printf("--------\n");
 	}
 
 	close (sfd);

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 
 
 #define SPORT 6666
@@ -37,6 +38,7 @@ int main()
 
 		// write(cfd, buf, strlen(buf)+1);	//strlen不包含\0 我传过去的时候希望传，就加一 
 		write(cfd, buf,strlen(buf));
+		exit(1);
 		// perror("sdasda");
 
 		// memset(bufr, 0, BUFSIZ);
