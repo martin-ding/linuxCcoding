@@ -180,9 +180,11 @@ int threadpool_free(threadpool_t *pool)
     if (pool->threads)//线程数组
     {
         free(pool->threads);
-        pthread_mutex_lock(&(pool->lock));               /*先锁住再销毁*/
+        // It shall be safe to destroy an initialized mutex that is unlocked.  
+        // Attempting to destroy a locked mutex results in undefined behavior.
+        pthread_mutex_unlock(&(pool->lock));        
         pthread_mutex_destroy(&(pool->lock));
-        pthread_mutex_lock(&(pool->thread_counter));
+        pthread_mutex_unlock(&(pool->thread_counter));
         pthread_mutex_destroy(&(pool->thread_counter));
         pthread_cond_destroy(&(pool->queue_not_empty));
         pthread_cond_destroy(&(pool->queue_not_full));
@@ -392,7 +394,7 @@ int threadpool_add_task(threadpool_t *pool, void *(*function)(void *arg), void *
         return -1;
     }
 
-    /*清空工作线程的回调函数的参数arg*/
+    /*清空工作线程的回调函数的参数arg，为了防止传进来的arg是一个结构体*/
     if (pool->task_queue[pool->queue_rear].arg != NULL)
     {
         free(pool->task_queue[pool->queue_rear].arg);//传的是变量的地址进来所以为了释放外面的变量
