@@ -63,7 +63,7 @@ int main() {
 
 	while (1) {
 		sleep(2);
-		write(cfd, "hello world", strlen("hello world"));
+		write(cfd, "hello world", strlen("hello world"));//模拟客户端干别的事情
 		// printf(" client ........\n");
 	}
 }

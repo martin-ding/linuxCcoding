@@ -39,7 +39,7 @@ int main(int argc,char* argv[])
 
     struct in_addr mi;
     /**
-    **** /usr/include/linux/in.h +84
+    **** /usr/include/linux/in.h:84
     #if __UAPI_DEF_IN_ADDR //Internet address. 
 
     struct in_addr {

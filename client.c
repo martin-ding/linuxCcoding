@@ -1,52 +1,67 @@
 #include <stdio.h>
-#include <sys/types.h>          /* See NOTES */
-#include <sys/socket.h>
-#include <unistd.h>
-#include <string.h>
-#include <arpa/inet.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 
+#define errhandler(msg) {perror(msg); exit(EXIT_FAILURE);}
 
-#define SPORT 6666
-#define SIP "127.0.0.1"
+int main(int argc, char * argv[]) {
+    if (argc != 2) {
+        printf("./client name\n");
+        exit(1);
+    }
+    char name[4] = {0};
+    strncpy(name, argv[1], 4);
+    int i;
+    for (i = 0; i < strlen(name); ++i) {
+        printf("%x\n",name[i]);
+    }
 
-int main()
-{
-	int cfd;
-	struct sockaddr_in saddr;
-	char buf[BUFSIZ] = {0};
-	// char bufr[BUFSIZ] = {0};
-	
-	// unsigned int ip;
-	// unsigned char ip[sizeof(struct in_addr)] = {0};
+    char *serverfifo = "serverfifo";
+    int writefd;
+    if (access(serverfifo,F_OK) == 0) {
+        writefd = open(serverfifo, O_RDWR|O_NONBLOCK);
+    } else {
+        writefd = mkfifo(serverfifo,0666);
+        int flag = fcntl(writefd,F_GETFL);
+        fcntl(writefd, flag|O_NONBLOCK);
+    }
 
-	cfd = socket(AF_INET, SOCK_STREAM, 0);
-	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons(SPORT);
-	inet_pton(AF_INET, SIP, (void *)&saddr.sin_addr.s_addr);
+    // 标注输入
+    int flag = fcntl(STDIN_FILENO,F_GETFL);
+    fcntl(STDIN_FILENO, F_SETFL, flag|O_NONBLOCK);
 
-	printf("--------\n");
+    //从服务端获取数据
+    int readfd;
+    if (access(name,F_OK) == 0) {
+        readfd = open(name, O_RDWR|O_NONBLOCK);
+    } else {
+        readfd = mkfifo(name,0666);
+        int flag = fcntl(readfd,F_GETFL);
+        fcntl(readfd, F_SETFL,flag|O_NONBLOCK);
+    }
+    if (readfd == -1) {
+        errhandler("readfd");
+    }
 
+    char writebuff[100] = {0}, readbuffer[100] = {0};
+    while (1) {
+        //从标准输入读取数据写入到服务端
+        int wlen = read(STDIN_FILENO, writebuff, sizeof(writebuff));
+        if (wlen > 0) {
+            write(writefd, writebuff, wlen);
+        }
 
-	connect(cfd, (struct sockaddr *)&saddr, sizeof(saddr));
+        int rlen = read(readfd, readbuffer, sizeof(readbuffer));
+        if (rlen > 0) {
+            write(STDOUT_FILENO, readbuffer, rlen);
+        }
 
-	while (1) {
-		
-		fgets(buf, sizeof(buf), stdin);
-		
-		// buf[strlen(buf)-1] = 0;//fgets 会将\n也记录到buf中
+        sleep(1);
+    }
 
-		// write(cfd, buf, strlen(buf)+1);	//strlen不包含\0 我传过去的时候希望传，就加一 
-		write(cfd, buf,strlen(buf));
-		exit(1);
-		// perror("sdasda");
-
-		// memset(bufr, 0, BUFSIZ);
-		read(cfd, buf, BUFSIZ);
-		
-		printf("read %s\n", buf);
-	}
-
-	close(cfd);
-	return 0;
+    return 0;
 }
