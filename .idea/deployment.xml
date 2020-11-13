@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="Remote Host (754b010b-8d71-4daa-a766-6a4c1c93595a)">
+    <serverData>
+      <paths name="Remote Host (754b010b-8d71-4daa-a766-6a4c1c93595a)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/clang" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>
